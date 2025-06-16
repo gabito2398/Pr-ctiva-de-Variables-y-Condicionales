@@ -1,0 +1,110 @@
+# ==============================================================================
+# 1. Definir Constantes
+#    (Utilice constantes para definir los valores de los porcentajes (seguridad social, ISR, bonificación)).
+#    AGREGAR VALORES REALES AQUÍ DESPUÉS DE LA INVESTIGACIÓN DEL PASO 1.
+# ==============================================================================
+
+# **IMPORTANTE:** Reemplace estos valores con los datos reales que investigue.
+# Estos son solo EJEMPLOS para que el script funcione.
+
+# Porcentaje de Descuento por Seguridad Social (TSS) - Ejemplo: 5.91% (2.87% AFP + 3.04% SFS)
+# Esto es una simplificación; la TSS tiene topes salariales.
+$TSS_PERCENTAGE = 0.0591
+
+# Porcentaje de Retención del Impuesto sobre la Renta (ISR) - Ejemplo: 7%
+# ¡ADVERTENCIA!: Esto es una gran simplificación. El ISR en RD es por escalas.
+# Para una implementación real y precisa, necesitaría una función que maneje las escalas del ISR.
+$ISR_PERCENTAGE = 0.07
+
+# Porcentaje de Bonificación (si aplica) - Ejemplo: 10%
+$BONUS_PERCENTAGE = 0.10
+
+# ==============================================================================
+# Funciones Auxiliares
+# ==============================================================================
+
+# Función para solicitar una entrada numérica positiva al usuario y validarla.
+function Get-PositiveNumericInput {
+    param(
+        [string]$Prompt # Mensaje a mostrar al usuario
+    )
+    $inputValid = $false
+    $inputValue = 0.0
+    while (-not $inputValid) {
+        $input = Read-Host $Prompt
+        if ([double]::TryParse($input, [ref]$inputValue) -and $inputValue -ge 0) {
+            $inputValid = $true
+        } else {
+            Write-Host "Entrada inválida. Por favor, ingrese un número positivo o cero." -ForegroundColor Red
+        }
+    }
+    return $inputValue
+}
+
+# Función para formatear números a dos decimales (para valores monetarios).
+function Format-Currency {
+    param(
+        [double]$Number
+    )
+    return "{0:N2}" -f $Number
+}
+
+# ==============================================================================
+# 2. Desarrollo del Programa
+# ==============================================================================
+
+Write-Host "--- Calculadora de Salario Neto ---"
+
+# 2.1. Solicitar el sueldo bruto del empleado
+$sueldoBruto = Get-PositiveNumericInput "Ingrese el sueldo bruto del empleado (ej. 50000.00): "
+
+# 2.2. Preguntar si aplica bonificación
+$aplicarBonificacion = Read-Host "Aplica bonificación a este empleado? (s/n)"
+$bonificacionMonto = 0.0
+if ($aplicarBonificacion -eq 's' -or $aplicarBonificacion -eq 'S') {
+    # Aquí calculamos la bonificación como un porcentaje del sueldo bruto.
+    # Podrías modificar esto si la bonificación es un monto fijo o tiene otra lógica.
+    $bonificacionMonto = $sueldoBruto * $BONUS_PERCENTAGE
+}
+
+# 2.3. Calcular los descuentos aplicables
+# Calcular descuento por Seguridad Social (TSS)
+# Consideración: Para una implementación real, aquí se debería aplicar el tope salarial de la TSS.
+$descuentoTSS = $sueldoBruto * $TSS_PERCENTAGE
+
+# Calcular descuento por Impuesto sobre la Renta (ISR)
+# ¡ADVERTENCIA!: Esta es una simplificación. La lógica real del ISR es más compleja
+# y debe basarse en las escalas de la DGII.
+# Para una implementación robusta, necesitarías una función como:
+# function Calculate-ISR {
+#    param([double]$Income)
+#    # Lógica para determinar el ISR basado en las escalas anuales/mensuales de la DGII.
+#    # Retorna el monto del ISR.
+# }
+# $descuentoISR = Calculate-ISR -Income $sueldoBruto
+$descuentoISR = $sueldoBruto * $ISR_PERCENTAGE # Uso del porcentaje fijo de ejemplo
+
+# 2.4. Solicitar otros descuentos (si los hay)
+$otrosDescuentosMonto = Get-PositiveNumericInput "Ingrese otros descuentos aplicables (ej. 1500.00, ingrese 0 si no hay): "
+
+# ==============================================================================
+# 3. Presentar los Resultados (Salidas Esperadas)
+# ==============================================================================
+
+# Calcular el sueldo neto provisional
+$sueldoNetoCalculado = $sueldoBruto - $descuentoTSS - $descuentoISR + $bonificacionMonto - $otrosDescuentosMonto
+
+Write-Host "`n--- Resumen de Cálculos Salariales ---"
+Write-Host "Sueldo Bruto:             $([char]0x24)$(Format-Currency $sueldoBruto)" # Añadido el símbolo de peso
+Write-Host "--------------------------------------------"
+Write-Host "Descuento por Seguridad Social (TSS): -$([char]0x24)$(Format-Currency $descuentoTSS)"
+Write-Host "Retención ISR:                    -$([char]0x24)$(Format-Currency $descuentoISR)"
+Write-Host "Otros Descuentos:                 -$([char]0x24)$(Format-Currency $otrosDescuentosMonto)"
+if ($aplicarBonificacion -eq 's' -or $aplicarBonificacion -eq 'S') {
+    Write-Host "Bonificación:                     +$([char]0x24)$(Format-Currency $bonificacionMonto)"
+}
+Write-Host "--------------------------------------------"
+Write-Host "Sueldo Neto:              $([char]0x24)$(Format-Currency $sueldoNetoCalculado)"
+Write-Host "--------------------------------------------"
+
+Write-Host "`nGracias por usar la calculadora de salario."
